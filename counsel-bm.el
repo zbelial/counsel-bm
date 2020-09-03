@@ -36,9 +36,7 @@
 ;; Floor, Boston, MA 02110-1301, USA.
 
 (require 'bm)
-(require 'cl-lib)
 (require 'ivy)
-(require 's)
 (require 'compile) ;; compilation-info-face, compilation-line-face
 
 (defgroup counsel-bm nil
