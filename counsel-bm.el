@@ -102,6 +102,7 @@
     (goto-line (string-to-number lineno))
     (recenter)))
 
+
 (defun counsel-bm ()
   (interactive)
   (let ((bms (counsel-bm-collector))
@@ -119,5 +120,15 @@
               :caller 'counsel-bm
               )))
 
+
+(defun counsel-bm-sorter (&optional l r)
+  (let* ((lr (cdr l))
+         (rr (cdr r))
+         (lp (string-to-number (plist-get lr :lineno)))
+         (rp (string-to-number (plist-get rr :lineno))))
+    (< lp rp)))
+
+(ivy-configure 'counsel-bm
+  :sort-fn #'counsel-bm-sorter)
 
 (provide 'counsel-bm)
