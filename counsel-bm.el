@@ -8,6 +8,7 @@
 ;; Created: 2020-09-03 14:08:12
 ;; Version: 0.1
 ;; URL: https://github.com/zbelial/counsel-bm.el
+;; Package-Requires: ((bm "201905"))
 ;; Keywords:
 ;; Compatibility: GNU Emacs 27.0.50
 ;;
