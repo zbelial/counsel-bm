@@ -49,6 +49,13 @@
   "Face used for annotation."
   :group 'counsel-bm)
 
+(defun counsel-bm-bookmarks-all()
+  (let (all bms)
+    (dolist (buf (buffer-list))
+      (setq bms (counsel-bm-bookmarks-in-buffer buf))
+      (when bms
+        (setq all (append all bms))))
+    all))
 
 (defun counsel-bm-bookmarks-in-buffer (&optional buf)
   "Gets a list of bookmarks in BUF, which can be a string or a buffer."
@@ -91,24 +98,32 @@
            :annotation annotation))))))
 
 
-(defun counsel-bm-collector ()
-  (let ((bms (mapcar #'counsel-bm-transform-to-candicate (counsel-bm-bookmarks-in-buffer))))
+(defun counsel-bm-collector (&optional all)
+  (let ((bms (mapcar #'counsel-bm-transform-to-candicate
+                     (if all
+                         (counsel-bm-bookmarks-all)
+                       (counsel-bm-bookmarks-in-buffer)))))
     (delq nil (mapcar #'(lambda (bm)
                           (cons (counsel-bm-candidate-transformer bm) bm))
                       bms))))
 
 (defun counsel-bm-jump (cand)
   (let* ((bm (cdr cand))
+         (bufname (plist-get bm :bufname))
          (lineno (plist-get bm :lineno)))
+    (switch-to-buffer bufname)
     (goto-line (string-to-number lineno))
     (recenter)))
 
 
 (defun counsel-bm ()
   (interactive)
-  (let ((bms (counsel-bm-collector))
-        (linum (line-number-at-pos))
-        (preselect 0))
+  (let* ((all (if (equal current-prefix-arg nil)
+                  nil
+                t))
+         (bms (counsel-bm-collector all))
+         (linum (line-number-at-pos))
+         (preselect 0))
     (dolist (bm bms)
       (when (< (string-to-number (plist-get (cdr bm) :lineno)) linum)
         (setq preselect (1+ preselect)))
@@ -125,9 +140,13 @@
 (defun counsel-bm-sorter (&optional l r)
   (let* ((lr (cdr l))
          (rr (cdr r))
+         (lb (plist-get lr :bufname))
+         (rb (plist-get rr :bufname))
          (lp (string-to-number (plist-get lr :lineno)))
          (rp (string-to-number (plist-get rr :lineno))))
-    (< lp rp)))
+    (or (string< lb rb)
+        (or (and (string= lb rb)
+                 (< lp rp))))))
 
 (ivy-configure 'counsel-bm
   :sort-fn #'counsel-bm-sorter)
