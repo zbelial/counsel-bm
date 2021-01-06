@@ -107,12 +107,18 @@
                           (cons (counsel-bm-candidate-transformer bm) bm))
                       bms))))
 
+(defun counsel-bm-goto-line (linum &optional buf)
+  (let ((buf (or buf (current-buffer))))
+    (with-current-buffer buf
+      (goto-char (point-min))
+      (forward-line (1- linum)))))
+
 (defun counsel-bm-jump (cand)
   (let* ((bm (cdr cand))
          (bufname (plist-get bm :bufname))
          (lineno (plist-get bm :lineno)))
     (switch-to-buffer bufname)
-    (goto-line (string-to-number lineno))
+    (counsel-bm-goto-line (string-to-number lineno))
     (recenter)))
 
 
@@ -128,7 +134,7 @@
       (when (< (string-to-number (plist-get (cdr bm) :lineno)) linum)
         (setq preselect (1+ preselect)))
       )
-    (ivy-read "Visibal bookmarks: " bms
+    (ivy-read "Visible bookmarks: " bms
               :preselect preselect
               :action '(1
                         ("o" counsel-bm-jump "jump to bookmark")
