@@ -121,26 +121,68 @@
     (counsel-bm-goto-line (string-to-number lineno))
     (recenter)))
 
+(defun counsel-bm-update-fn ()
+    (with-ivy-window
+      (let ((current (ivy-state-current ivy-last))
+            item bm bufname line)
+        ;; (message "current %S" current)
+        (when current
+          (setq item (nth (get-text-property 0 'idx current) (ivy-state-collection ivy-last)))
+          ;; (message "item %S" item)
+          (setq bm (cdr item))
+          ;; (message "bm %S" bm)
+          (setq bufname (plist-get bm :bufname))
+          (setq line (plist-get bm :lineno))
 
+          (when (get-buffer bufname)
+            (when (not (string-equal (buffer-name) bufname))
+              (set-window-buffer (selected-window) bufname)
+              )
+            (with-current-buffer bufname
+              (goto-line (string-to-number line))
+              (recenter)
+              )
+            )))))
+
+(defvar counsel-bm--obuf nil)
+(defvar counsel-bm--opoint nil)
 (defun counsel-bm ()
   (interactive)
+  (setq counsel-bm--obuf (buffer-name))
+  (setq counsel-bm--opoint (point))
+
   (let* ((all (if (equal current-prefix-arg nil)
                   nil
                 t))
          (bms (counsel-bm-collector all))
          (linum (line-number-at-pos))
-         (preselect 0))
+         (preselect 0)
+         res)
     (dolist (bm bms)
       (when (< (string-to-number (plist-get (cdr bm) :lineno)) linum)
         (setq preselect (1+ preselect)))
       )
-    (ivy-read "Visible bookmarks: " bms
-              :preselect preselect
-              :action '(1
-                        ("o" counsel-bm-jump "jump to bookmark")
-                        )
-              :caller 'counsel-bm
-              )))
+    (unwind-protect
+        (setq res (ivy-read "Visible bookmarks: " bms
+                  :preselect preselect
+                  :action '(1
+                            ("o" counsel-bm-jump "jump to bookmark")
+                            )
+                  :update-fn #'counsel-bm-update-fn
+                  :caller 'counsel-bm
+                  ))
+      (unless res
+        (with-ivy-window
+          (when (not (string-equal (buffer-name) counsel-bm--obuf))
+            (set-window-buffer (selected-window) counsel-bm--obuf)
+            )
+          (with-current-buffer counsel-bm--obuf
+            (goto-char counsel-bm--opoint))
+          )
+        )
+      )
+    )
+  )
 
 
 (defun counsel-bm-sorter (&optional l r)
