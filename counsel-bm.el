@@ -126,7 +126,7 @@
       (let ((current (ivy-state-current ivy-last))
             item bm bufname line)
         ;; (message "current %S" current)
-        (when current
+        (when (not (string-empty-p current))
           (setq item (nth (get-text-property 0 'idx current) (ivy-state-collection ivy-last)))
           ;; (message "item %S" item)
           (setq bm (cdr item))
